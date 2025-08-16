@@ -6,15 +6,19 @@
     xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
                         http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
  <sitemap>
+  <loc>https://amerikrainian.com/categories/programming.xml</loc>
+  <lastmod>2025-08-16T20:11:00Z</lastmod>
+ </sitemap>
+ <sitemap>
   <loc>https://amerikrainian.com/galleries/rss.xml</loc>
-  <lastmod>2025-08-14T18:56:00Z</lastmod>
+  <lastmod>2025-08-16T20:11:00Z</lastmod>
  </sitemap>
  <sitemap>
   <loc>https://amerikrainian.com/rss.xml</loc>
-  <lastmod>2025-08-14T18:56:00Z</lastmod>
+  <lastmod>2025-08-16T20:11:00Z</lastmod>
  </sitemap>
  <sitemap>
   <loc>https://amerikrainian.com/sitemap.xml</loc>
-  <lastmod>2025-08-14T18:56:00Z</lastmod>
+  <lastmod>2025-08-16T20:11:00Z</lastmod>
  </sitemap>
 </sitemapindex>
