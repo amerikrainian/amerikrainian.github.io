@@ -1,0 +1,183 @@
+<!--
+.. title: NVGT: An Arguable Step Back Into History
+.. slug: nvgt-an-arguable-step-back-into-history
+.. date: 2025-08-16 00:20:00 UTC-05:00
+.. tags: Programming
+.. category: 
+.. link: 
+.. description: 
+.. type: text
+.. status: published
+-->
+
+"The man who never alters his opinion is like standing water, and breeds reptiles of the mind."--William Blake.
+
+# Some background
+I have been debating writing this for a couple reasons. Is anyone going to read this? Is anyone going to listen? Is anyone going to care? Yet, fascinatingly enough, I found myself repeating the same arguments to a multitude of people. I found myself sounding like a broken record. This suggests, amongst other things, that people just might be interested in what I have to say... or that I really should get a life and stop caring, one of the two.
+
+<!-- TEASER_END -->
+
+My primary goal is not to necessarily convince you that my way is the right way. I found that it doesn't work with intransigent people and breeds unnecessary hostility. To that end, I will outline the facts and attempt to provide concessions to both sides, regardless of my stance.
+
+# Some history
+On March 24th, 2010, the beta version of the Blastbay Game Toolkit hit the [audiogames.net forum](https://forum.audiogames.net/topic/3574/beta-version-01-of-the-blastbay-game-toolkit-released/). It offered a quick and easy way to create audio games with no programming experience required and used [Angelscript](https://www.angelcode.com/angelscript/) as its scripting language. It was, without a doubt, quite convenient for its time: want to play a sound? No problem! Just create a sound object, load a file into it, and call play. Want to check if a key is pressed? That's also easy--just create a window, stick a while loop and an if statement, and you're done. Oh, and it even came with a specialized batteries included tutorial that focused on making games and didn't bother mentioning graphics or any related concepts like frames (the engine had no actual capability to output text to the screen). It focused on simplicity, which--at the time--seemed fine.
+
+Then, on May 31st, 2014, BGT went into [soft abandonment](https://nvgt.gg/blog/slowly-going-live/). While it would be some time before its author confirmed abandonment, the engine going freeware (what happened on the indicated date) marked the soft point of no return and is--to my knowledge--the last update that got released.
+
+Ten years later, its successor--[Nonvisual Game Toolkit](https://nvgt.gg/) (NVGT)--came onto the scene. It claimed to offer compatibility with BGT's functions and overall behavior, a job that it--I must say--succeeded quite well at. The migration process, for the most part, was pretty straightforward. Add an include statement at the top of your main source file and profit. Quoting the engine's philosophy from its homepage:
+> Inspired by the Blastbay Gaming Toolkit (BGT) known to much of the audio-gaming community and originally created because of that engine's discontinuation, the NVGT engine aims to not only preserve old BGT games and make them better but to also provide a new platform for anybody who wishes to get into game development without learning some of the lower level programming concepts or languages usually required for such a thing, continuing where the concept of the BGT engine left off but with a completely new codebase and a cross platform design.
+
+# So what's the problem?
+On paper, this sounds great. A bespoke engine for audio games surely can't be a bad thing. But they were not kidding when they said 100% compatibility. This includes both the design philosophy and poor practices like using insecure Cryptography functions, poor organization of functions (there are few objects and the language feels procedural when in fact it has full support for things like namespaces and classes), little to no documentation in an obscure format (HTM), and so on. In short, there is too much magic.
+
+# An argument against compatibility
+I want to dissect some of the main promises NVGT makes for its users and show why they either fall short or turn out to not really matter. Where better to start than compatibility?
+
+## Fact: Most games in BGT are frozen
+Nearly all the games I can think of that were made in BGT are simply executables and have not been touched for years. Their creators moved on, either to new languages or abandoning game development in general. As such, they likely would not care that a new language offering 100% compatibility with the code they wrote 10 years ago was released.
+
+## Fact: BGT spawned large volumes of poor code
+To anyone unfamiliar with the history of audio games, here is the thirty-second rundown of the countless debates and hurt feelings over the years. Some online games were made in BGT. Unbeknownst to the creator, their code was stolen and passed around the community, spawning what people like myself affectionally call "unauthorized forks." The code made its way into the hands of teenagers, who changed around some values, renamed some weapons (the games in question were nearly all shooters), and claimed the game as their own. Worse, barely having read the built-in tutorial, said impressionable neophytes continued piling on features on top of an already flimsy architecture. The result? Functions that are hundreds if not thousands lines long, classes that are glorified bags of data (structs), and an overall mess of spaghetti code.
+
+## Fact: At the time of its writing, the 100% compatibility offered by NVGT is underused
+It's been a little over a year since the engine got released, yet we've seen depressingly few titles being revived, and even fewer still that were actually worthwhile to bring back from the dusty shelves for anything other than nostalgias' sake, for which a simple executable would also work well. If there was a demand for migration, I would think we would see more titles being brought back from the depths of history, but we aren't. When combined with the earlier point regarding the frozen/abandoned status of majority of BGT projects, one can't help but ask: was a path to migration really and truly necessary?
+
+## Fact: BGT Didn't Have Much Technical Debt
+The amount of open source BGT includes is depressingly low. We do not have any major project that the community has worked on that would be absolutely infeasible to bring over. The includes that are there could be condensed to half their size in other programming languages if not downright taken out. For example, there is an include for JSON parsing. This comes for "free" in any reasonable programming language. There was an include for message pack--a networking protocol--which is often a simple command away for the package manager of your choice. If anything, BGT encouraged closed-source after the fiascos with illegally-obtained code.
+
+Some would argue that one year is too short for any meaningful judgement, and I would tend to agree. Such is the price of writing this analysis at the time I am, and I promise that, were there to be a revival of a major title, I will go back and update this post.
+
+## Fact: BGT Had Poor Practices
+Over time, the community has discovered numerous problems with BGT, ranging from insecure cryptography (using CBC mode with padding vulnerabilities), to questionable architecture attempting to emulate auditory graphical user interfaces (GUIs). While some efforts were made to fix the latter, they all try and adhere to what I would argue as ancient APIs to try and minimize the friction of adoption: to be clear. I understand, if do not entirely agree with this. As a primary example, the old audio-based GUI returned integers for any kind of control you would attach to the form. Buttons? An integer. Sub-forms (ability to embed forms inside the main form)? Also an integer. Furthermore, the form had no concept of events, meaning you would actively have to poll it to see whether anything interesting has occurred. The new form--at the time of writing under development--somewhat addresses this: it actually has classes for the underlying widgets, but it still maintains the legacy polling interface and to my knowledge has yet to add events of any sort, which makes them secondary citizens at best and promotes tight coupling between the widgets and their parent. For instance, the new form, as currently designed, has to know about every single widget. An excerpt of this fact is below:
+
+```angelscript
+class nv_form {
+    bool is_pressed(nv_form_button@btn) {
+        if(@btn.parent != this) return this.error(nv_form_error_invalid_control);
+        bool result = btn.pressed;
+        if(result) btn.pressed = false;
+        return result;
+    }
+
+    bool is_checked(nv_form_checkbox@box) {
+        if(@box.parent != this) return this.error(nv_form_error_invalid_control);
+        return box.state;
+    }
+}
+```
+
+This is problematic, because it is virtually impossible to define a truly custom widget without subclassing the main form and telling it how to treat your new control. There is also a more subtle problem, in that the entirety of the system uses string identifiers for controls, which leads to typos and is slow, because as is, the design has to walk the entire list of controls to find what you're looking for. "But of course," I hear you say, "a hashmap--or a dictionary in Angelscript parlance--would solve this issue." Yes. It would. Except there is another fact to consider, mainly that you iterate through all the controls to check for anything interesting. Consider another snippet:
+
+```nvgt
+bool check_controls(nv_form_control@&out ctrl = void) {
+    if(this.controls.length()<=0) return false;
+    bool result = false;
+    for(uint i = 0; i<this.controls.length(); i+=1) {
+        if(this.controls[i].monitor()) {
+            result = true;
+            @ctrl = this.controls[i];
+            break;
+        }
+    }
+    return result;
+}
+
+bool monitor() {
+    if(!this.active) return false;
+    this.handle_input();
+    nv_form_control@ctrl;
+    bool result = this.check_controls(ctrl);
+    if(result and @ctrl != null and (@this.cancel_control != null and @ctrl == this.cancel_control)) return false;
+    return true;
+}
+```
+
+As you can see, making a dictionary for ids kicks the problem down the road because you must call monitor in your main loop.
+
+!!! note
+    If interested, the code in question is [here](https://github.com/ivansoto0/nv_form)
+
+The story of Cryptography is not much better. I was informed by the primary maintainer of NVGT that it doesn't matter that the employed methods have a theoretical vulnerability--attacking a cryptographic construction directly is rarely how people crack games anyways. The analogy given to me was that of a castle. If the main door is secured, who cares that a window at the top of the tower was left open to the elements? I have thought on it some, and it turns out... I do, strongly enough to where I believe this deserves a passing mention. Providing insecure tools to users for the sake of compatibility is irresponsible at best. If given the option, people will change as little as possible to make their code run, which means they will continue using said tools knowing fully well they have known vulnerabilities. Why not offer migration scripts--those using the old vulnerable format to decrypt game assets and re-encrypting it into something the new engine understands? This way whatever encryption functions users choose to use won't be insecure at the outset. After all, it gets cold during the night up in that tower--wind blowing through the hallways and an occasional owl flying in to say hello.
+
+# A Case For Compatibility
+## Lowering Barriers For Making Games is Good!
+This is undoubtedly the strongest argument for compatibility. Having built a tool that is up-to-date, NVGT attempts to provide an easy buy-in for new developers. And in that case, it genuinely succeeds: it is much, much faster to explain to someone new how to get a basic window up and running when compared with something like Python, where it's easy to do so... after you install a package like Pygame.
+
+But this apparent advantage comes with hidden costs. NVGT's extreme simplicity creates false confidence that can be more harmful than helpful. New developers get a working game so quickly that they believe they've mastered the fundamentals, when in reality they've barely scratched the surface. This leads to architectural decisions made in ignorance - sprawling global variables, monolithic functions, and rigid designs that become exponentially harder to refactor as projects grow.
+
+Worse, the skills learned in NVGT's hyper-simplified environment don't transfer well to other programming contexts. Developers who start with NVGT often struggle when they eventually need to move to more standard tools, because they never learned essential concepts like modular design or working within established ecosystems. The "easy start" becomes a trap that makes the eventual transition to professional development practices much steeper than if they had started with slightly more friction but better foundations.
+
+## The More Examples, the Better!
+Even as broken and imperfect as they are, they can't hurt, right? I beg to differ: I think there is great harm in seeing dozens of examples of games with global variables all over the place. Need an enemy? No problem! Just add an another array of handles. Weapons? Sure; just do an if statement that reads something along the lines of if this is a knife then range is 2, if this is a sword then range is 5, and so on. I am not saying other languages magically solve this problem--you can find terrible code for anything--but they have a much larger pool of samples and a lot more guidance as to what is considered clean and good practice.
+
+To be clear, I am not saying one should adhere to perfect coding styles all of the time. I certainly do not. But it pains me to see people slap together a game with 50 global variables and then go, "Alright! I'm ready for a multiplayer game!" I've frequently encountered developers who come to NVGT with an expectation of being able to make a multiplayer first-person shooter having just finished up a Simon game... if that.
+
+## NVGT Has Everything Out of the Box!
+This is another valid point, and perhaps the most practically important one. NVGT provides an impressively comprehensive toolkit that eliminates the dependency management nightmares that plague most programming environments. Want to get keyboard presses? It's built in. Play a sound? No external libraries needed. Encrypt data? The functions are right there waiting for you. Compare this to Python, where you'd need Pygame for audio, cryptography for encryption, and potentially other packages for input handling - each with their own installation quirks, version conflicts, and documentation styles. Even experienced developers know the frustration of spending hours wrestling with package managers instead of building their game. For beginners, this setup friction is often where dreams of game development go to die.
+
+Except this begins to corner the user into a box of its own. If anything is not provided by the engine, they have no recourse but to either ask really nicely for someone to implement their feature, which takes time, or try and implement this on their own, which would require them to learn the features NVGT precisely wanted to insulate them from. Make no mistake; this transition is incredibly, incredibly steep, even more so because the engine sets up this expectation of having things for free, and actually peeling back the curtain--nay, a veil--of abstraction is incredibly daunting.
+
+# When Is Magic Too Much?
+Say one thing for BGT, say it got the balance of what to include right. It was relatively minimalistic, having basic tools for audio, window, input, and some miscellaneous functions for things like checking whether you're an administrator and objects like a pathfinder and calendar. You could learn the entire API in an afternoon and feel (relatively) confident you understood your options. NVGT, on the other hand, suffers from what is known as feature creep: it has access to a huge variety of capabilities like sending mail, access to raw sockets, and--of all things--the ability to use locks, semaphores and friends. The last point is particularly salient: if NVGT aims to shelter users from low-level programming, why bother exposing threading primitives? After all, they are, notoriously, difficult to use.
+
+This creates a paradox: in trying to make game development more accessible, NVGT has made it more intimidating. A beginner browsing the function list encounters threading primitives and network protocols alongside basic sound playback, with no clear guidance about what they actually need. Should they be worried about thread safety when making a simple word game? Do they need to understand SMTP before creating their first audio adventure? The engine says no by providing simple examples, but the API surface suggests otherwise. Add to this the lack of clear documentation about what is and isn't available--an issue the community acknowledges but hasn't resolved--and the "batteries included" philosophy begins to backfire.
+
+The newly-developed form exemplifies this problem perfectly: if I want to check whether a button is pressed, why should I face five different methods when four aren't recommended? If they're not recommended, why expose them at all? This ties back to my earlier point about BGT's minimal technical debt. If old methods continue working, there's little incentive for users to adopt new approaches, creating an ever-expanding API that serves no one well.
+
+But there's a deeper issue: NVGT is fundamentally fighting AngelScript's design. AngelScript was built as a scripting language for game logic, not as a general-purpose programming language. It deliberately lacks features like generics because game scripts typically work with a known set of types rather than complex abstractions. NVGT's attempt to force it into broader service creates constant friction. It had to reengineer the any type to work around the lack of generics, but this requires clunky type-casting with if statements. It exposed async constructs, but passing functions in AngelScript is awkward due to requiring explicit type definitions. It includes a serializer that I attempted to improve but abandoned due to endless edge cases with nested and self-referential structures.
+
+For each problem NVGT "solves," it adds ten more functions to the API. That's 10 more functions to document, 10 more functions to look at for a beginner in the reference guide, 10 more functions to debug and maintain. This cycle won't end because the project has shifted from building a game engine to reinventing a programming language without actually writing a compiler.
+
+!!! note
+    To be clear: none of this is AngelScript's fault. It never advertised itself as a general-purpose programming language.
+
+# So Why Not Fix It?
+An astute reader might point out that I've been mostly pointing out faults rather than attempting solutions. The project is on Github - surely I could contribute directly? The short answer: I tried.
+
+The codebase itself presents significant challenges. The author acknowledges it needs refactoring, but feature creep consistently takes priority. There's no centralized roadmap or clear division of work. When I contributed to the physics system, I discovered fundamental mismatches between AngelScript's garbage collection and standard physics memory models - issues that became apparent only when trying to use the API in practice. Having used the existing codebase as my guide for AngelScript bindings, I inadvertently perpetuated the same problematic patterns until I actually tried to use what I'd built.
+
+I also developed an alternative form system inspired by Qt and wxWidgets, with proper event handling and widget trees--approaches that industry frameworks adopt for good reasons like encouraging decoupling and supporting custom widgets. The community's response was revealing: they rejected it not on technical grounds, but because it required learning something new. The stated reasoning? "This is how we did it before" and, more tellingly, "This is an audio UI; if it were truly graphical we'd bother, but it's not, so why change?"
+
+Let that sink in for a moment. Apparently, sound-based interfaces don't deserve proper architecture because they're not visual. As if the principles of loose coupling, event-driven design, and modularity somehow become irrelevant when you can't see the buttons. It's a bit like arguing that you don't need to organize your kitchen properly because you're cooking with your eyes closed--the underlying logic remains just as important, perhaps more so.
+
+This perfectly encapsulates the compatibility-first mindset I've been describing. Rather than evaluating whether the new approach solved real problems--and it did address several architectural issues I outlined earlier--the response was reflexive resistance to change based on the most superficial reasoning imaginable. When "we can't see it" becomes a justification for poor engineering practices, you know the commitment to backward compatibility has overridden any concern for technical merit.
+
+# So What Now?
+One might once again point out that, aside from suggesting migration scripts for cryptography-related issues, I've yet to provide concrete steps as to how to address the outlined issues. Let's remedy that.
+
+## Figure Out What You Want To Be
+This is probably by far the most glaring issue. Is NVGT a game engine? A general programming language? Something else? Right now it's a bit unclear as to what it aims for. If the former, start stripping down stuff that just doesn't matter for games--think raw socket support. Start deconstructing things into plug-ins. After all, the engine has a system for this; it's a shame it is underutilized. If it's the latter, consider whether AngelScript's design limitations align with your goals. There's absolutely nothing wrong with AngelScript as a game scripting language, but as I outlined above, NVGT keeps hitting limitations when trying to force it into general-purpose service. This ultimately detracts from the time that could be spent on features that would make audio games shine.
+
+Or consider starting over entirely. Given the depth of architectural debt and AngelScript limitations I've outlined, it's worth asking whether a clean slate would be more productive than continued retrofitting. Love2D offers a proven, well-architected foundation with a permissive license--it could be forked and modified for audio-specific needs without inheriting decades of compatibility baggage. Why not attempt to use that instead? The only setback would be the lack of compatibility with BGT scripts, which as I pointed out earlier is not such a large concern. It is also an appealing choice because the engine already compiles to all of the platforms NVGT currently targets (Windows, Mac, Linux, Android), so really what it would be is perhaps adding a few API functions.
+
+To illustrate how a concrete problem could be solved with something like Lua, consider something as fundamental as serialization--a feature every game engine needs. In Lua, serialization is almost trivial: tables are the primary data structure, they handle arbitrary nesting naturally, and the language's reflective capabilities make walking object graphs straightforward. What required hundreds of lines of careful edge-case handling in AngelScript becomes a dozen lines of elegant Lua.
+
+!!! note
+    Please do not misconstrued what I'm saying: I do not advocate for Lua as the end-all-be-all magic box for solving all the problems I outlined above. It certainly has a few quirks of its own to deal with. I am merely stating that clutching at tradition runs counterproductive to the goal of producing high quality community experiences.
+
+## Be Opinionated
+NVGT tries to support all possible programming paradigms, which, although sounding great on paper, has already resulted in large technical debt. Furthermore, in doing so, it inadvertently contradicts its goal of trying to raise the bar for high-quality games by allowing people to migrate to what essentially is another box. Make no mistake; as is, NVGT is one--a more expansive, shiny box.
+
+Forcing opinions is not necessarily bad if done in moderation. Unity forces you into component-based architecture - everything is a GameObject with Components, and their Inspector system dictates how you expose properties. Unreal commits to Actor-Component patterns and pushes you toward either C++ or Blueprint visual scripting - no middle ground. Godot insists everything is a Node in a scene tree and promotes their signal system for communication over other messaging patterns.
+
+The result? They can provide almost magical features because their opinions give them invariants to operate on. Unity's component system enables their serialization to "just work" across the entire object graph. Unreal's Blueprint system can provide visual debugging because it knows exactly how data flows. Godot's node architecture allows their scene instancing to be incredibly powerful. If NVGT wants more quality games, perhaps it should enforce opinions that promote higher-quality paradigms rather than perpetuating every possible way to check if a button is pressed. Constraining choices often liberates creativity by providing solid foundations to build upon.
+
+## Embrace Change as Growth
+For the community: the reflexive resistance to new approaches needs addressing. Learning new paradigms isn't a betrayal of BGT's legacy; it's evolution. When technical merit gets dismissed because "this is how we did it before," you're not preserving tradition--you're calcifying it. You are discarding decades of experiences of the videogame industry that still apply to audio games. Yes--we don't have graphics to contend with, but that is not an excuse to ignore things like frame-based updates--which anyone working in NVGT would have to do anyways if they want to use physics--and tried and true design patterns.
+
+For individuals: if you're starting fresh, consider whether NVGT's limitations align with your long-term goals. If you're building simple games and prioritize immediate productivity over transferable skills, it might work fine. But if you plan to grow as a developer or work on more complex projects, you might benefit from starting with tools that teach industry-standard practices from the beginning.
+
+If you're considering alternatives, the landscape has improved considerably. Godot has recently gained accessibility support—it's not perfect, but the more people use it, the faster we can identify and fix issues. For those preferring code-first approaches, Python with Pygame plus OpenAL or Synthizer for audio can take you surprisingly far. If you want something batteries-included similar to NVGT, Love2D, which I mentioned earlier, offers a more compelling case--it's a Lua framework that provides comprehensive game development tools without the architectural baggage.
+
+### A Note on Source Protection
+I anticipate that some readers will object to the alternatives I've suggested on the grounds of source code protection. "But with Python/Lua/etc., people can steal my code!" This concern, while understandable given our community's history, reveals a fundamental misunderstanding of how code protection actually works.
+
+The uncomfortable truth is that no programming language provides meaningful source protection. AngelScript compiles to bytecode just like Python or Lua--and while nobody has bothered writing a disassembler for it yet, that's a matter of community size and interest, not technical impossibility. If your AngelScript game becomes popular enough to be worth stealing, someone motivated enough will find a way.
+
+Assembly, bytecode, minified JavaScript, compiled C++--every approach leaves breadcrumbs that can be followed by someone sufficiently determined. The only real protection is legal (copyright) and practical (making your game's value lie in ongoing development and community rather than static code).
+
+More importantly, optimizing your technology choices around the assumption that your code will be stolen puts the cart before the horse. Focus first on building something worth protecting. The audio gaming community's energy would be better spent creating innovative, well-architected games than perpetuating tools chosen primarily for their obscurity.
+
+# The End
+At the end of the day, I want to play games just as much as anyone else. I want to see some new mechanics, because I personally think that the potential of audio has not yet been fully explored. I want to have tools at my disposal that I could collaborate with others on. Most importantly, I want those tools to stand the test of time and not be abandoned by the wayside in another four years. The audio gaming community stands at a crossroads. We can continue to let backward compatibility breed the reptiles of stagnation, or we can embrace the discomfort of evolution. We can try and embed audio games into industry tools, or slide back into history, scrambling to achieve even a pittance of efficiency when it comes to the tools available to our sighted peers. Game development is hard as it is. There is no reason why we should cripple ourselves even more than we already are.
+
